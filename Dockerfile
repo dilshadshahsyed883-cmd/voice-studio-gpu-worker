@@ -35,7 +35,9 @@ RUN mkdir -p /models/huggingface /models/torch /tmp/voice-studio \
     && chmod 0777 /models/huggingface /models/torch /tmp/voice-studio
 
 EXPOSE 8000
+# Salad Container Gateway routes traffic over IPv6, so the public gateway process
+# must listen on ::. Keep the internal engine subprocesses on loopback IPv4.
 HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
-  CMD curl -fsS http://127.0.0.1:${PORT}/healthz || exit 1
+  CMD curl -g -fsS "http://[::1]:${PORT}/healthz" || exit 1
 
-CMD ["bash","-lc","uvicorn main:app --host 0.0.0.0 --port ${PORT} --workers 1"]
+CMD ["bash","-lc","uvicorn main:app --host :: --port ${PORT} --workers 1"]
