@@ -22,7 +22,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Set image name
-        run: echo "IMAGE=ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/voice-studio-gpu-worker" >> "$GITHUB_ENV"
+        run: echo "IMAGE=ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/voice-studio-indicf5-runtime" >> "$GITHUB_ENV"
 
       - name: Verify gated IndicF5 build access
         env:
