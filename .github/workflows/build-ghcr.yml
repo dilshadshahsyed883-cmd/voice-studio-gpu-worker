@@ -1,11 +1,10 @@
-name: Build GPU worker image
+name: Build IndicF5-only GPU worker image
 
 on:
   workflow_dispatch:
   push:
     branches:
-      - main
-      - build/canary-worker-v1
+      - build/indicf5-only-v1
     paths:
       - Dockerfile
       - app/**
@@ -34,14 +33,14 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build and push
+      - name: Build and push IndicF5-only image
         uses: docker/build-push-action@v6
         with:
           context: .
           push: true
           platforms: linux/amd64
           tags: |
-            ${{ env.IMAGE }}:canary
-            ${{ env.IMAGE }}:canary-${{ github.sha }}
+            ${{ env.IMAGE }}:indicf5-only
+            ${{ env.IMAGE }}:indicf5-only-${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
