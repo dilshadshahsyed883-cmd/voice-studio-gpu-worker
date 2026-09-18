@@ -18,6 +18,7 @@ tqdm>=4.65.0
 transformers==4.49.0
 transformers_stream_generator
 vocos
+wandb
 x_transformers>=1.31.14
 fastapi==0.116.1
 uvicorn[standard]==0.35.0
