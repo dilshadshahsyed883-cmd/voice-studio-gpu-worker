@@ -32,7 +32,7 @@ RUN python -m pip install --upgrade pip setuptools wheel \
     && python -m venv --system-site-packages /opt/venvs/indicf5 \
     && /opt/venvs/indicf5/bin/pip install --upgrade pip setuptools wheel \
     && /opt/venvs/indicf5/bin/pip install -r /tmp/requirements-indicf5.txt \
-    && /opt/venvs/indicf5/bin/pip install --no-deps "git+https://github.com/AI4Bharat/IndicF5.git@\${INDICF5_COMMIT}"
+    && /opt/venvs/indicf5/bin/pip install --no-deps "git+https://github.com/AI4Bharat/IndicF5.git@${INDICF5_COMMIT}"
 
 # Keep the known Vocos/PyTorch meta-tensor compatibility fix in the image.
 RUN /opt/venvs/indicf5/bin/python - <<'PY'
@@ -64,8 +64,8 @@ RUN mkdir -p /opt/hf-cache/hub /opt/hf-cache/modules /opt/torch-cache /opt/model
 # Bundle exact immutable model revisions. The HF token is build-only and never
 # copied into the image.
 RUN --mount=type=secret,id=hf_token \
-    INDICF5_MODEL_REVISION="\${INDICF5_MODEL_REVISION}" \
-    VOCOS_MODEL_REVISION="\${VOCOS_MODEL_REVISION}" \
+    INDICF5_MODEL_REVISION="${INDICF5_MODEL_REVISION}" \
+    VOCOS_MODEL_REVISION="${VOCOS_MODEL_REVISION}" \
     /opt/venvs/indicf5/bin/python - <<'PY'
 import json
 import os
@@ -157,6 +157,6 @@ ENV HF_HUB_OFFLINE=1 \
 EXPOSE 8000
 
 HEALTHCHECK --interval=30s --timeout=5s --start-period=120s --retries=3 \
-  CMD curl -g -fsS "http://[::1]:\${PORT}/healthz" || exit 1
+  CMD curl -g -fsS "http://[::1]:${PORT}/healthz" || exit 1
 
-CMD ["bash","-lc","/opt/venvs/indicf5/bin/python /app/verify_bundle.py && exec uvicorn main:app --host :: --port \${PORT} --workers 1"]
+CMD ["bash","-lc","/opt/venvs/indicf5/bin/python /app/verify_bundle.py && exec uvicorn main:app --host :: --port ${PORT} --workers 1"]
