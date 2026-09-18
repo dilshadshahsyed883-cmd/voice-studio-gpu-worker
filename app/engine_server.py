@@ -78,9 +78,18 @@ def load_model():
             return _model
         if not torch.cuda.is_available():
             raise RuntimeError("CUDA GPU is not available")
+        import json
         from transformers import AutoModel
+        bundle_path = Path("/opt/models/bundle.json")
+        if not bundle_path.is_file():
+            raise RuntimeError("IndicF5 bundle manifest is missing")
+        bundle = json.loads(bundle_path.read_text())
+        revision = str(bundle.get("indicf5_revision") or "").strip()
+        if not revision:
+            raise RuntimeError("IndicF5 bundled revision is missing")
         _model = AutoModel.from_pretrained(
             "ai4bharat/IndicF5",
+            revision=revision,
             trust_remote_code=True,
             cache_dir=str(HF_CACHE_DIR),
             local_files_only=True,
