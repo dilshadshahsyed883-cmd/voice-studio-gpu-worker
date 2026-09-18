@@ -50,6 +50,19 @@ def main() -> int:
             raise RuntimeError(f"missing bundled file: {repo_id}/{filename}")
         resolved.append({"repo": repo_id, "file": filename, "bytes": p.stat().st_size})
 
+    # Also verify the exact unqualified lookups used by IndicF5 custom code and
+    # F5-TTS/Vocos helpers. These must work with networking disabled.
+    for repo_id, filename in REQUIRED:
+        path = hf_hub_download(
+            repo_id=repo_id,
+            filename=filename,
+            cache_dir=str(CACHE_DIR),
+            local_files_only=True,
+        )
+        p = Path(path)
+        if not p.is_file() or p.stat().st_size <= 0:
+            raise RuntimeError(f"offline main-ref resolution failed: {repo_id}/{filename}")
+
     print(json.dumps({
         "ok": True,
         "engine": "indicf5",
