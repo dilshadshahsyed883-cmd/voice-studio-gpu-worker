@@ -42,5 +42,7 @@ jobs:
           tags: |
             ${{ env.IMAGE }}:indicf5-only
             ${{ env.IMAGE }}:indicf5-only-${{ github.sha }}
+          secrets: |
+            hf_token=${{ secrets.HF_TOKEN }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
