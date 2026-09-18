@@ -2,12 +2,13 @@
 
 Serverless AMD64/CUDA worker for **VPS 3 Voice Studio**.
 
-## Engines
+## Engine
 
-- **Chatterbox Multilingual V3**: Arabic, English, Hindi and the official Chatterbox multilingual language set.
-- **IndicF5**: Assamese, Bengali, Gujarati, Hindi, Kannada, Malayalam, Marathi, Odia, Punjabi, Tamil and Telugu.
+This image contains **IndicF5 only**.
 
-The two engines intentionally run in **separate Python virtual environments** because their current upstream Transformer requirements conflict: Chatterbox pins Transformers 5.2.0 while IndicF5 requires `<4.50`. A lightweight gateway keeps one model process active at a time so a 24 GB RTX 3090 is not forced to keep both models resident simultaneously.
+Supported languages: Assamese, Bengali, Gujarati, Hindi, Kannada, Malayalam, Marathi, Odia, Punjabi, Tamil and Telugu.
+
+Chatterbox has been removed from this image and from the worker API contract.
 
 ## VPS3 contract
 
@@ -16,7 +17,7 @@ The two engines intentionally run in **separate Python virtual environments** be
 - `POST /v1/clone/generate`
 - optional bearer authentication via `WORKER_TOKEN`
 
-The request contract matches the existing VPS3 `voice_clone_dispatcher.py`.
+The generation endpoint accepts only `engine: "indicf5"`.
 
 ## Canary target
 
@@ -33,15 +34,20 @@ The request contract matches the existing VPS3 `voice_clone_dispatcher.py`.
 
 The container does **not** contain Google Drive credentials or permanent Voice Studio state. Reference audio arrives per request, is stored only in temporary storage, and is deleted after generation.
 
-## Reproducible upstream pins
+## Reproducible upstream pin
 
-- Chatterbox: `5de7a54aa4e5e2baadb0182dde554908b48b85c2`
 - IndicF5: `13f7c4d627cc10111aea8fe9c0039462cacacdc7`
 
 ## Image
 
-GitHub Actions publishes the canary image to:
+GitHub Actions publishes this branch separately as:
 
-`ghcr.io/dilshadshahsyed883-cmd/voice-studio-gpu-worker:canary`
+`ghcr.io/dilshadshahsyed883-cmd/voice-studio-gpu-worker:indicf5-only`
+
+and an immutable commit-specific tag:
+
+`ghcr.io/dilshadshahsyed883-cmd/voice-studio-gpu-worker:indicf5-only-<git-sha>`
+
+The existing `:canary` image is intentionally left untouched for rollback.
 
 Do not put Salad, Drive, Hugging Face, or worker secrets in this repository.
