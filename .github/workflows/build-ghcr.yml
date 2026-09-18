@@ -24,6 +24,9 @@ jobs:
       - name: Set image name
         run: echo "IMAGE=ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/voice-studio-indicf5-runtime" >> "$GITHUB_ENV"
 
+      - name: Validate v4 Python sources
+        run: python -m py_compile app/main.py app/engine_server.py app/verify_bundle.py
+
       - name: Verify gated IndicF5 build access
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
