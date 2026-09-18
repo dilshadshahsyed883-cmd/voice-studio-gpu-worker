@@ -18,8 +18,8 @@ from pydantic import BaseModel, Field
 
 ENGINE = "indicf5"
 PORT = int(os.getenv("ENGINE_PORT", "9102"))
-CACHE_DIR = Path(os.getenv("HF_HOME", "/models/huggingface"))
-CACHE_DIR.mkdir(parents=True, exist_ok=True)
+HF_CACHE_DIR = Path(os.getenv("HF_HUB_CACHE", "/opt/hf-cache/hub"))
+HF_CACHE_DIR.mkdir(parents=True, exist_ok=True)
 TMP = Path("/tmp/voice-studio")
 TMP.mkdir(parents=True, exist_ok=True)
 app = FastAPI(title="Voice Studio IndicF5 engine")
@@ -82,7 +82,8 @@ def load_model():
         _model = AutoModel.from_pretrained(
             "ai4bharat/IndicF5",
             trust_remote_code=True,
-            cache_dir=str(CACHE_DIR),
+            cache_dir=str(HF_CACHE_DIR),
+            local_files_only=True,
         )
         return _model
 
