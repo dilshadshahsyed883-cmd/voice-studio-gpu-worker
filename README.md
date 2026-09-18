@@ -4,11 +4,15 @@ Serverless AMD64/CUDA worker for **VPS 3 Voice Studio**.
 
 ## Engine
 
-This image contains **IndicF5 only**.
+This image contains **IndicF5 only** and is built as a self-contained offline runtime.
 
 Supported languages: Assamese, Bengali, Gujarati, Hindi, Kannada, Malayalam, Marathi, Odia, Punjabi, Tamil and Telugu.
 
 Chatterbox has been removed from this image and from the worker API contract.
+
+Normal Salad startup performs **zero runtime downloads**. The image already contains the IndicF5 source/runtime dependencies, the complete gated `ai4bharat/IndicF5` model snapshot, and the `charactr/vocos-mel-24khz` vocoder snapshot. Runtime sets `HF_HUB_OFFLINE=1`, `TRANSFORMERS_OFFLINE=1`, and `HF_DATASETS_OFFLINE=1`.
+
+The gated model is fetched only during GitHub Actions build using the repository secret `HF_TOKEN` through a BuildKit secret mount. The token is not copied into an image layer.
 
 ## VPS3 contract
 
@@ -50,4 +54,4 @@ and an immutable commit-specific tag:
 
 The existing `:canary` image is intentionally left untouched for rollback.
 
-Do not put Salad, Drive, Hugging Face, or worker secrets in this repository.
+Do not put Salad, Drive, Hugging Face, or worker secrets in repository files or image layers. The GitHub Actions `HF_TOKEN` secret is build-only.
