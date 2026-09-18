@@ -30,10 +30,18 @@ def main() -> int:
         raise RuntimeError("bundle manifest IndicF5 repo mismatch")
 
     resolved = []
+    revisions = {
+        "ai4bharat/IndicF5": data.get("indicf5_revision"),
+        "charactr/vocos-mel-24khz": data.get("vocoder_revision"),
+    }
     for repo_id, filename in REQUIRED:
+        revision = revisions.get(repo_id)
+        if not revision:
+            raise RuntimeError(f"missing pinned revision for {repo_id}")
         path = hf_hub_download(
             repo_id=repo_id,
             filename=filename,
+            revision=revision,
             cache_dir=str(CACHE_DIR),
             local_files_only=True,
         )
