@@ -28,6 +28,32 @@ RUN python -m pip install --upgrade pip setuptools wheel \
     && /opt/venvs/indicf5/bin/pip install -r /tmp/requirements-indicf5.txt \
     && /opt/venvs/indicf5/bin/pip install --no-deps "git+https://github.com/AI4Bharat/IndicF5.git@${INDICF5_COMMIT}"
 
+# IndicF5 upstream currently has a known Vocos/PyTorch meta-tensor issue on
+# recent CUDA/PyTorch stacks. Apply the minimal upstream-compatible fix during
+# the image build so the vocoder can materialize parameters before loading its
+# state dict. Fail the build if the expected upstream code is no longer present.
+RUN /opt/venvs/indicf5/bin/python - <<'PY'
+from pathlib import Path
+import inspect
+import f5_tts.infer.utils_infer as u
+
+p = Path(inspect.getsourcefile(u))
+text = p.read_text()
+needle = """        vocoder = Vocos.from_hparams(config_path)
+        state_dict = torch.load(model_path, map_location="cpu", weights_only=True)
+"""
+replacement = """        vocoder = Vocos.from_hparams(config_path)
+        if any(param.is_meta for param in vocoder.parameters()):
+            vocoder = vocoder.to_empty(device="cpu")
+        state_dict = torch.load(model_path, map_location="cpu", weights_only=True)
+"""
+if "vocoder = vocoder.to_empty(device=\"cpu\")" not in text:
+    if needle not in text:
+        raise SystemExit(f"IndicF5 Vocos patch precondition not found in {p}")
+    p.write_text(text.replace(needle, replacement, 1))
+print(f"patched IndicF5 Vocos loader: {p}")
+PY
+
 COPY app /app
 RUN mkdir -p /opt/hf-cache/hub /opt/hf-cache/modules /opt/torch-cache /opt/models /tmp/voice-studio \
     && chmod 0777 /tmp/voice-studio
