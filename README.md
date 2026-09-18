@@ -46,11 +46,11 @@ The container does **not** contain Google Drive credentials or permanent Voice S
 
 GitHub Actions publishes this branch separately as:
 
-`ghcr.io/dilshadshahsyed883-cmd/voice-studio-gpu-worker:indicf5-only`
+`ghcr.io/dilshadshahsyed883-cmd/voice-studio-indicf5-runtime:indicf5-only`
 
 and an immutable commit-specific tag:
 
-`ghcr.io/dilshadshahsyed883-cmd/voice-studio-gpu-worker:indicf5-only-<git-sha>`
+`ghcr.io/dilshadshahsyed883-cmd/voice-studio-indicf5-runtime:indicf5-only-<git-sha>`
 
 The existing `:canary` image is intentionally left untouched for rollback.
 
