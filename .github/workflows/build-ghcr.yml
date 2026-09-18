@@ -24,6 +24,16 @@ jobs:
       - name: Set image name
         run: echo "IMAGE=ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/voice-studio-gpu-worker" >> "$GITHUB_ENV"
 
+      - name: Verify gated IndicF5 build access
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: |
+          if [ -z "$HF_TOKEN" ]; then
+            echo "::error::Repository secret HF_TOKEN is required. Accept access to ai4bharat/IndicF5 on Hugging Face, create a read token, then save it as GitHub Actions secret HF_TOKEN."
+            exit 1
+          fi
+          echo "HF_TOKEN is configured for build-only model bundling."
+
       - uses: docker/setup-buildx-action@v3
 
       - name: Login to GHCR
