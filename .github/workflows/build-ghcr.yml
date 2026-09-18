@@ -51,7 +51,9 @@ jobs:
           platforms: linux/amd64
           tags: |
             ${{ env.IMAGE }}:indicf5-only
+            ${{ env.IMAGE }}:indicf5-v4
             ${{ env.IMAGE }}:indicf5-only-${{ github.sha }}
+            ${{ env.IMAGE }}:indicf5-v4-${{ github.sha }}
           secrets: |
             hf_token=${{ secrets.HF_TOKEN }}
           cache-from: type=gha
