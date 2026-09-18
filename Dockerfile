@@ -91,6 +91,19 @@ snapshot_download(
     cache_dir=cache,
 )
 
+# Hugging Face creates immutable snapshots for explicit revisions, but IndicF5's
+# custom model code performs some nested lookups without passing a revision.
+# Create local refs/main pointers so those lookups resolve entirely from this
+# bundled cache while HF_HUB_OFFLINE=1.
+for repo_id, sha in (
+    ("ai4bharat/IndicF5", indic_sha),
+    ("charactr/vocos-mel-24khz", vocos_sha),
+):
+    repo_cache = Path(cache) / ("models--" + repo_id.replace("/", "--"))
+    refs = repo_cache / "refs"
+    refs.mkdir(parents=True, exist_ok=True)
+    (refs / "main").write_text(sha)
+
 Path("/opt/models/bundle.json").write_text(json.dumps({
     "engine": "indicf5",
     "offline_bundle": True,
