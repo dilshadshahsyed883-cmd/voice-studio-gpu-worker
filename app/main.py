@@ -58,13 +58,18 @@ class EngineManager:
     def __init__(self) -> None:
         self.proc: subprocess.Popen | None = None
         self.lock = asyncio.Lock()
+        self.ready = False
 
     def is_running(self) -> bool:
         return bool(self.proc and self.proc.poll() is None)
 
+    def is_ready(self) -> bool:
+        return self.ready and self.is_running()
+
     def _stop(self) -> None:
         proc = self.proc
         self.proc = None
+        self.ready = False
         if not proc or proc.poll() is not None:
             return
 
@@ -91,20 +96,21 @@ class EngineManager:
 
     async def ensure(self) -> str:
         async with self.lock:
-            if self.is_running():
-                return f"http://127.0.0.1:{ENGINE_PORT}"
-
-            self._stop()
-            env = os.environ.copy()
-            env["ENGINE_NAME"] = ENGINE
-            env["ENGINE_PORT"] = str(ENGINE_PORT)
-            env["TORCHDYNAMO_DISABLE"] = "1"
-            self.proc = subprocess.Popen(
-                [ENGINE_PYTHON, str(BASE_DIR / "engine_server.py")],
-                env=env,
-                start_new_session=True,
-            )
             url = f"http://127.0.0.1:{ENGINE_PORT}"
+            if self.is_ready():
+                return url
+
+            if not self.is_running():
+                self._stop()
+                env = os.environ.copy()
+                env["ENGINE_NAME"] = ENGINE
+                env["ENGINE_PORT"] = str(ENGINE_PORT)
+                env["TORCHDYNAMO_DISABLE"] = "1"
+                self.proc = subprocess.Popen(
+                    [ENGINE_PYTHON, str(BASE_DIR / "engine_server.py")],
+                    env=env,
+                    start_new_session=True,
+                )
             deadline = time.monotonic() + ENGINE_TIMEOUT
             async with httpx.AsyncClient(timeout=2.0) as client:
                 while time.monotonic() < deadline:
@@ -117,6 +123,7 @@ class EngineManager:
                         if r.status_code == 200:
                             data = r.json()
                             if data.get("ok") is True and data.get("model_loaded") is True:
+                                self.ready = True
                                 return url
                     except Exception:
                         pass
@@ -427,6 +434,7 @@ async def healthz():
         "version": APP_VERSION,
         "engine": ENGINE,
         "engine_process_running": manager.is_running(),
+        "engine_ready": manager.is_ready(),
         "worker_token_configured": bool(WORKER_TOKEN),
         "async_jobs": True,
         "torch_compile": False,
@@ -438,7 +446,7 @@ async def healthz():
 
 @app.get("/readyz")
 async def readyz():
-    if not manager.is_running():
+    if not manager.is_ready():
         return JSONResponse(
             status_code=503,
             content={
