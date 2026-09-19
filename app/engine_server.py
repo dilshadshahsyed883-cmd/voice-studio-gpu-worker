@@ -92,6 +92,56 @@ def load_model():
             cache_dir=str(HF_CACHE_DIR),
             local_files_only=True,
         )
+
+        # INDICF5_EMA_CHECKPOINT_FIX
+        # The pinned IndicF5 checkpoint stores the trained CFM/DiT weights as
+        # ema_model._orig_mod.*. Transformers does not map that compile wrapper
+        # prefix to ema_model.* automatically, so validate and load the trained
+        # EMA weights explicitly before this model can become healthy.
+        from safetensors.torch import load_file
+
+        ckpt_path = (
+            HF_CACHE_DIR
+            / "models--ai4bharat--IndicF5"
+            / "snapshots"
+            / revision
+            / "model.safetensors"
+        )
+        if not ckpt_path.is_file():
+            raise RuntimeError(f"IndicF5 checkpoint missing: {ckpt_path}")
+
+        raw_state = load_file(str(ckpt_path), device="cpu")
+        prefix = "ema_model._orig_mod."
+        ema_state = {
+            key[len(prefix):]: value
+            for key, value in raw_state.items()
+            if key.startswith(prefix)
+        }
+
+        expected_keys = set(_model.ema_model.state_dict().keys())
+        supplied_keys = set(ema_state.keys())
+        missing = sorted(expected_keys - supplied_keys)
+        unexpected = sorted(supplied_keys - expected_keys)
+
+        print(
+            f"IndicF5 EMA validation: expected={len(expected_keys)} "
+            f"checkpoint={len(supplied_keys)} "
+            f"missing={len(missing)} unexpected={len(unexpected)}"
+        )
+        if missing or unexpected:
+            raise RuntimeError(
+                "IndicF5 EMA checkpoint key mismatch: "
+                f"missing={len(missing)} unexpected={len(unexpected)} "
+                f"missing_sample={missing[:5]} "
+                f"unexpected_sample={unexpected[:5]}"
+            )
+
+        _model.ema_model.load_state_dict(ema_state, strict=True)
+        _model.ema_model.eval()
+        print(
+            f"IndicF5 EMA checkpoint loaded correctly: "
+            f"{len(ema_state)} tensors from {ckpt_path}"
+        )
         return _model
 
 
