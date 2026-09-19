@@ -20,7 +20,7 @@ from fastapi import FastAPI, Header, HTTPException
 from fastapi.responses import FileResponse, JSONResponse
 from pydantic import BaseModel, Field
 
-APP_VERSION = "0.4.0-indicf5-eager"
+APP_VERSION = "0.4.1-indicf5-eager"
 WORKER_TOKEN = os.getenv("WORKER_TOKEN", "").strip()
 ENGINE_TIMEOUT = float(os.getenv("ENGINE_START_TIMEOUT", "180"))
 CHUNK_TIMEOUT = float(os.getenv("ENGINE_CHUNK_TIMEOUT", "240"))
@@ -224,6 +224,10 @@ def _split_piece(piece: str, max_bytes: int) -> list[str]:
             buf = word.lstrip()
             if len(buf.encode("utf-8")) <= max_bytes:
                 continue
+        else:
+            # Keep accumulating ordinary tokens. Without this assignment,
+            # punctuation-free long sentences silently lose most of their text.
+            buf = candidate
 
         if len(buf.encode("utf-8")) > max_bytes:
             small = ""

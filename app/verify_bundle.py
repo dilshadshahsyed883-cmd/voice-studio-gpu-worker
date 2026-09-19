@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import sys
 from pathlib import Path
 
@@ -63,6 +64,18 @@ def main() -> int:
         raise RuntimeError("IndicF5 eager vocoder patch not found")
     if "self.ema_model = load_model(" not in model_py:
         raise RuntimeError("IndicF5 eager model patch not found")
+
+    # Regression guard for long, punctuation-free Indic text. Every normalized
+    # character must survive chunking and every chunk must respect the byte cap.
+    from main import _split_text
+    chunk_probe = ("यह एक लंबा परीक्षण वाक्य है " * 120).strip()
+    probe_chunks = _split_text(chunk_probe, 180)
+    probe_expected = re.sub(r"\\s+", " ", chunk_probe).strip()
+    probe_actual = re.sub(r"\\s+", " ", " ".join(probe_chunks)).strip()
+    if probe_actual != probe_expected:
+        raise RuntimeError("IndicF5 chunk splitter dropped text")
+    if not probe_chunks or any(len(chunk.encode("utf-8")) > 180 for chunk in probe_chunks):
+        raise RuntimeError("IndicF5 chunk splitter byte cap validation failed")
 
     # Verify unqualified helper lookups also resolve entirely offline.
     for repo_id, filename in REQUIRED:
